@@ -146,6 +146,7 @@ struct Q_SVG_PRIVATE_EXPORT QSvgExtraStates
     Qt::FillRule fillRule;
     qreal strokeDashOffset;
     bool vectorEffect; // true if pen is cosmetic
+    qint8 imageRendering; // -1 - auto, 0 - optimizeSpeed, 1 - optimizeQuality
 };
 
 class Q_SVG_PRIVATE_EXPORT QSvgStyleProperty : public QSvgRefCounted
@@ -188,6 +189,8 @@ public:
     void apply(QPainter *p, const QSvgNode *node, QSvgExtraStates &states) override;
     void revert(QPainter *p, QSvgExtraStates &states) override;
     Type type() const override;
+
+    void setImageRendering(qint8);
 private:
     // color-render ing v 	v 	'auto' | 'optimizeSpeed' |
     //                                  'optimizeQuality' | 'inherit'
@@ -208,7 +211,9 @@ private:
 
     // image-rendering v 	v 	'auto' | 'optimizeSpeed' | 'optimizeQuality' |
     //                                      'inherit'
-    //QSvgImageRendering m_imageRendering;
+    qint32 m_imageRendering: 4;
+    qint32 m_oldImageRendering: 4;
+    qint32 m_imageRenderingSet: 1;
 };
 
 

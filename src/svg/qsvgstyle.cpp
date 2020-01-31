@@ -62,6 +62,7 @@ QSvgExtraStates::QSvgExtraStates()
     , fillRule(Qt::WindingFill)
     , strokeDashOffset(0)
     , vectorEffect(false)
+    , imageRendering(-1)
 {
 }
 
@@ -81,16 +82,46 @@ void QSvgFillStyleProperty::revert(QPainter *, QSvgExtraStates &)
 
 
 QSvgQualityStyle::QSvgQualityStyle(int color)
+    : m_imageRendering(-1)
+    , m_oldImageRendering(-1)
+    , m_imageRenderingSet(0)
 {
     Q_UNUSED(color);
 }
-void QSvgQualityStyle::apply(QPainter *, const QSvgNode *, QSvgExtraStates &)
-{
 
+void QSvgQualityStyle::setImageRendering(qint8 hint) {
+    m_imageRendering = hint;
+    m_imageRenderingSet = 1;
 }
-void QSvgQualityStyle::revert(QPainter *, QSvgExtraStates &)
-{
 
+void QSvgQualityStyle::apply(QPainter *p, const QSvgNode *, QSvgExtraStates &states)
+{
+   m_oldImageRendering = states.imageRendering;
+   if (m_imageRenderingSet) {
+       states.imageRendering = m_imageRendering;
+   }
+   if (m_imageRenderingSet) {
+       bool smooth = false;
+       if (m_imageRendering == -1)
+           // auto (the spec says to prefer quality. Maybe this should be in QSvgImage?)
+           smooth = true;
+       else
+           smooth = (m_imageRendering == Qt::SmoothTransformation);
+       p->setRenderHint(QPainter::SmoothPixmapTransform, smooth);
+   }
+}
+
+void QSvgQualityStyle::revert(QPainter *p, QSvgExtraStates &states)
+{
+    if (m_imageRenderingSet) {
+        states.imageRendering = m_oldImageRendering;
+        bool smooth = false;
+        if (m_oldImageRendering == -1)
+            smooth = true;
+        else
+            smooth = (m_oldImageRendering == Qt::SmoothTransformation);
+        p->setRenderHint(QPainter::SmoothPixmapTransform, smooth);
+    }
 }
 
 QSvgFillStyle::QSvgFillStyle()
